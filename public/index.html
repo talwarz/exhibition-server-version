@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exhibition Data Collection</title>
+  <style>
+    * { box-sizing: border-box; font-family: Arial, sans-serif; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #111827, #1f2937);
+      color: #111827;
+    }
+    .container { width: 100%; max-width: 1100px; margin: auto; padding: 20px; }
+    .card {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+      margin-bottom: 20px;
+    }
+    h1, h2, h3 { margin-top: 0; }
+    h1 { color: #ffffff; text-align: center; margin-bottom: 20px; }
+    label { font-weight: bold; display: block; margin: 12px 0 6px; }
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 15px;
+    }
+    textarea { min-height: 90px; resize: vertical; }
+    button {
+      border: none;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+    .primary { background: #2563eb; color: white; }
+    .success { background: #16a34a; color: white; }
+    .danger { background: #dc2626; color: white; }
+    .dark { background: #111827; color: white; }
+    .secondary { background: #e5e7eb; color: #111827; }
+    .row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .hidden { display: none; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .badge {
+      background: #f3f4f6;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 14px;
+      display: inline-block;
+      margin-top: 5px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .stat-box {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 18px;
+      text-align: center;
+    }
+    .stat-number { font-size: 32px; font-weight: bold; color: #2563eb; }
+    .stat-label { margin-top: 6px; font-size: 14px; color: #4b5563; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td {
+      border: 1px solid #e5e7eb;
+      padding: 10px;
+      text-align: left;
+      font-size: 14px;
+      vertical-align: top;
+    }
+    th { background: #111827; color: white; }
+    .message { margin-top: 10px; font-weight: bold; }
+    .error { color: #dc2626; }
+    .ok { color: #16a34a; }
+    @media (max-width: 700px) {
+      .row, .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Exhibition Customer Data Collection</h1>
+
+    <div id="loginPage" class="card">
+      <h2>Employee Login</h2>
+      <p>Please enter your username and password to continue.</p>
+
+      <label>Username</label>
+      <input id="loginUsername" type="text" placeholder="Enter username" />
+
+      <label>Password</label>
+      <input id="loginPassword" type="password" placeholder="Enter password" />
+
+      <button class="primary" onclick="login()">Login</button>
+      <p id="loginMessage" class="message"></p>
+    </div>
+
+    <div id="appPage" class="hidden">
+      <div class="card topbar">
+        <div>
+          <h2 style="margin-bottom: 5px;">Customer Entry Form</h2>
+          <span class="badge">Logged in as: <b id="currentUserText"></b></span>
+          <span class="badge">Role: <b id="currentRoleText"></b></span>
+        </div>
+        <button class="secondary" onclick="logout()">Logout</button>
+      </div>
+
+      <div class="card">
+        <h3>Add Customer Data</h3>
+        <div class="row">
+          <div>
+            <label>Customer Name</label>
+            <input id="customerName" type="text" placeholder="Enter customer name" />
+          </div>
+          <div>
+            <label>Mobile Number</label>
+            <input id="mobileNumber" type="tel" maxlength="10" placeholder="10 digit mobile number" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)" />
+          </div>
+        </div>
+
+        <label>Notes</label>
+        <textarea id="notes" placeholder="Feed customer notes here"></textarea>
+
+        <button class="success" onclick="saveCustomer()">Save Data</button>
+        <p id="formMessage" class="message"></p>
+      </div>
+
+      <div class="card">
+        <h3>Data Count</h3>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div id="totalLeadsCount" class="stat-number">0</div>
+            <div class="stat-label">Total Entries</div>
+          </div>
+          <div class="stat-box">
+            <div id="todayLeadsCount" class="stat-number">0</div>
+            <div class="stat-label">Today's Entries</div>
+          </div>
+          <div class="stat-box">
+            <div id="myLeadsCount" class="stat-number">0</div>
+            <div class="stat-label">My Entries</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>All Customer Entries</h3>
+        <p>All logged-in users can view the full customer entry list.</p>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Mobile</th>
+                <th>Notes</th>
+                <th>Added By</th>
+                <th>Date & Time</th>
+                <th id="publicActionHead" class="hidden">Action</th>
+              </tr>
+            </thead>
+            <tbody id="publicRecordsTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="adminPanel" class="card hidden">
+        <h3>Admin Panel</h3>
+
+        <div class="row">
+          <button class="primary" onclick="exportToExcel()">Export Data to Excel</button>
+          <button class="danger" onclick="deleteAllData()">Delete All Customer Data</button>
+        </div>
+
+        <hr />
+
+        <h3>Create Employee User</h3>
+        <div class="row">
+          <div>
+            <label>New Username</label>
+            <input id="newUsername" type="text" placeholder="Employee username" />
+          </div>
+          <div>
+            <label>New Password</label>
+            <input id="newPassword" type="text" placeholder="Employee password" />
+          </div>
+        </div>
+        <button class="dark" onclick="createUser()">Create User</button>
+        <p id="userMessage" class="message"></p>
+
+        <hr />
+
+        <h3>Employee Users</h3>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="usersTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  let currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
+
+  function authHeaders() {
+    return {
+      "Content-Type": "application/json",
+      "x-username": currentUser.username,
+      "x-role": currentUser.role
+    };
+  }
+
+  async function api(url, options = {}) {
+    const response = await fetch(url, options);
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(data && data.message ? data.message : "Something went wrong.");
+    }
+
+    return data;
+  }
+
+  async function login() {
+    const username = document.getElementById("loginUsername").value.trim();
+    const password = document.getElementById("loginPassword").value.trim();
+    const msg = document.getElementById("loginMessage");
+
+    try {
+      const user = await api("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+
+      currentUser = user;
+      localStorage.setItem("currentUser", JSON.stringify(user));
+      showApp();
+    } catch (error) {
+      msg.textContent = error.message;
+      msg.className = "message error";
+    }
+  }
+
+  function logout() {
+    currentUser = null;
+    localStorage.removeItem("currentUser");
+    document.getElementById("loginPage").classList.remove("hidden");
+    document.getElementById("appPage").classList.add("hidden");
+    document.getElementById("loginUsername").value = "";
+    document.getElementById("loginPassword").value = "";
+  }
+
+  async function showApp() {
+    if (!currentUser) return;
+
+    document.getElementById("loginPage").classList.add("hidden");
+    document.getElementById("appPage").classList.remove("hidden");
+    document.getElementById("currentUserText").textContent = currentUser.username;
+    document.getElementById("currentRoleText").textContent = currentUser.role;
+
+    if (currentUser.role === "admin") {
+      document.getElementById("adminPanel").classList.remove("hidden");
+      await renderUsers();
+    } else {
+      document.getElementById("adminPanel").classList.add("hidden");
+    }
+
+    await refreshData();
+  }
+
+  async function saveCustomer() {
+    const name = document.getElementById("customerName").value.trim();
+    const mobile = document.getElementById("mobileNumber").value.trim();
+    const notes = document.getElementById("notes").value.trim();
+    const msg = document.getElementById("formMessage");
+
+    if (!name) {
+      msg.textContent = "Please enter customer name.";
+      msg.className = "message error";
+      return;
+    }
+
+    if (!/^\d{10}$/.test(mobile)) {
+      msg.textContent = "Mobile number must be exactly 10 digits.";
+      msg.className = "message error";
+      return;
+    }
+
+    try {
+      await api("/api/leads", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ name, mobile, notes })
+      });
+
+      document.getElementById("customerName").value = "";
+      document.getElementById("mobileNumber").value = "";
+      document.getElementById("notes").value = "";
+
+      msg.textContent = "Data saved successfully.";
+      msg.className = "message ok";
+
+      await refreshData();
+    } catch (error) {
+      msg.textContent = error.message;
+      msg.className = "message error";
+    }
+  }
+
+  async function refreshData() {
+    await updateCounts();
+    await renderPublicRecords();
+  }
+
+  async function updateCounts() {
+    const counts = await api("/api/counts", {
+      headers: authHeaders()
+    });
+
+    document.getElementById("totalLeadsCount").textContent = counts.total;
+    document.getElementById("todayLeadsCount").textContent = counts.today;
+    document.getElementById("myLeadsCount").textContent = counts.mine;
+  }
+
+  async function renderPublicRecords() {
+    const data = await api("/api/leads", {
+      headers: authHeaders()
+    });
+
+    const tbody = document.getElementById("publicRecordsTable");
+    const actionHead = document.getElementById("publicActionHead");
+    tbody.innerHTML = "";
+
+    if (currentUser.role === "admin") {
+      actionHead.classList.remove("hidden");
+    } else {
+      actionHead.classList.add("hidden");
+    }
+
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="${currentUser.role === "admin" ? 7 : 6}">No customer data found.</td></tr>`;
+      return;
+    }
+
+    data.forEach((item, index) => {
+      const adminDeleteButton = currentUser.role === "admin"
+        ? `<td><button class="danger" onclick="deleteSingleRecord(${item.id})">Delete</button></td>`
+        : "";
+
+      tbody.innerHTML += `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${escapeHtml(item.name)}</td>
+          <td>${escapeHtml(item.mobile)}</td>
+          <td>${escapeHtml(item.notes || "")}</td>
+          <td>${escapeHtml(item.added_by)}</td>
+          <td>${escapeHtml(item.date_time)}</td>
+          ${adminDeleteButton}
+        </tr>
+      `;
+    });
+  }
+
+  async function deleteSingleRecord(id) {
+    if (!confirm("Delete this customer record?")) return;
+
+    await api(`/api/leads/${id}`, {
+      method: "DELETE",
+      headers: authHeaders()
+    });
+
+    await refreshData();
+  }
+
+  async function deleteAllData() {
+    if (!confirm("Are you sure you want to delete all customer data?")) return;
+
+    await api("/api/leads", {
+      method: "DELETE",
+      headers: authHeaders()
+    });
+
+    await refreshData();
+  }
+
+  function exportToExcel() {
+    window.open("/api/export", "_blank");
+  }
+
+  async function createUser() {
+    const username = document.getElementById("newUsername").value.trim();
+    const password = document.getElementById("newPassword").value.trim();
+    const msg = document.getElementById("userMessage");
+
+    try {
+      await api("/api/users", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ username, password })
+      });
+
+      document.getElementById("newUsername").value = "";
+      document.getElementById("newPassword").value = "";
+      msg.textContent = "Employee user created successfully.";
+      msg.className = "message ok";
+      await renderUsers();
+    } catch (error) {
+      msg.textContent = error.message;
+      msg.className = "message error";
+    }
+  }
+
+  async function renderUsers() {
+    if (currentUser.role !== "admin") return;
+
+    const users = await api("/api/users", {
+      headers: authHeaders()
+    });
+
+    const tbody = document.getElementById("usersTable");
+    tbody.innerHTML = "";
+
+    users.forEach((user, index) => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${escapeHtml(user.username)}</td>
+          <td>${escapeHtml(user.role)}</td>
+          <td>${user.is_active ? "Active" : "Inactive"}</td>
+        </tr>
+      `;
+    });
+  }
+
+  function escapeHtml(text) {
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  if (currentUser) {
+    showApp();
+  }
+</script>
+</body>
+</html>
